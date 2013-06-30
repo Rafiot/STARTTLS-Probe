@@ -43,8 +43,6 @@ def try_host(p, host, port, force_ssl = False):
         dates.sort()
         if day in dates:
             return False
-        last_entry = '{ip}|{day}|{port}'.format(ip=ip, day=dates[-1],
-                port = port)
         cipher = r.hget(ip + '|' + str(dates[-1]), port)
         if cipher == cipher_name:
             return False
