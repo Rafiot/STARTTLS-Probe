@@ -4,8 +4,6 @@ set -e
 
 echo -n 'Starting redis...'
 bash ./launch_local_redis.sh
-sleep 3
-#FIXME: make sure the db is loaded
 echo ' done.'
 
 echo -n 'Adding domains to probe...'
@@ -14,9 +12,9 @@ echo ' done.'
 
 echo -n 'Launch probes...'
 for i in {1..10}; do
-    python probe.py &
+    python probe.py --history &
 done
-python probe.py
+python probe.py --history
 echo ' done.'
 
 while [ `redis-cli -s ./redis.sock client list | wc -l` -gt 1 ]; do

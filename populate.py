@@ -4,6 +4,7 @@
 import argparse
 import sys
 import redis
+import time
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -12,6 +13,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     r = redis.Redis(unix_socket_path='./redis.sock')
+    while True:
+        try:
+            r.ping()
+            break
+        except:
+            time.sleep(1)
+
     p = r.pipeline(False)
 
     for line in args.infile:
