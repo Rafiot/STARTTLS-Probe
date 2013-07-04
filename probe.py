@@ -1,8 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+import ssl
+from OpenSSL import crypto
 import smtplib
-import redis
+redis_package = True
+try:
+    import redis
+except:
+    redis_package = False
 import datetime
 import argparse
 import sys
@@ -43,7 +49,8 @@ def probe(host, port, force_ssl = False):
     # get details
     to_return['cipher_name'], to_return['version'], to_return['size'] = s.sock.cipher()
     to_return['ip'], to_return['port'] = s.sock.getpeername()
-    to_return['peercert'] = s.sock.getpeercert(True)
+    cert = crypto.load_certificate(crypto.FILETYPE_PEM, ssl.DER_cert_to_PEM_cert(s.sock.getpeercert(True)))
+    to_return['peercert'] = cert.get_issuer().get_components()
     return to_return
 
 
@@ -67,7 +74,7 @@ def historize(p, data):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    g = parser.add_mutually_exclusive_group(required=True)
+    g = parser.add_mutually_exclusive_group(required=False)
     g.add_argument('--history', action='store_true', default=False,
             help='Save the informations related to the server in a redis backend.')
     g.add_argument('domains', nargs='?', type=argparse.FileType('r'),
@@ -75,6 +82,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.history:
+        if not redis_package:
+            sys.exit('redis module unavailable.')
         r = redis.Redis(unix_socket_path='./redis.sock')
         while True:
             domain = r.spop('to_process_domains')
