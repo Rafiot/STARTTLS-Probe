@@ -47,9 +47,25 @@ def probe(host, port, force_ssl = False):
             return to_return
 
     # get details
-    to_return['cipher_name'], to_return['version'], to_return['size'] = s.sock.cipher()
+    to_return['cipher_name'], to_return['version'], to_return['size'] \
+            = s.sock.cipher()
     to_return['ip'], to_return['port'] = s.sock.getpeername()
-    cert = crypto.load_certificate(crypto.FILETYPE_PEM, ssl.DER_cert_to_PEM_cert(s.sock.getpeercert(True)))
+    cert = crypto.load_certificate(crypto.FILETYPE_PEM,
+            ssl.DER_cert_to_PEM_cert(s.sock.getpeercert(True)))
+    """
+    interesting functions
+    ? crypto.X509.digest
+    - crypto.X509.get_extension
+    - crypto.X509.get_extension_count
+    + crypto.X509.get_issuer
+    - crypto.X509.get_notAfter
+    - crypto.X509.get_notBefore
+    + crypto.X509.get_pubkey
+    + crypto.X509.get_serial_number
+    + crypto.X509.get_signature_algorithm
+    + crypto.X509.get_subject
+    + crypto.X509.get_version
+    """
     to_return['peercert'] = cert.get_issuer().get_components()
     return to_return
 
