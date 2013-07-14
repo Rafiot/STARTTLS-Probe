@@ -10,6 +10,7 @@ try:
 except:
     redis_package = False
 import datetime
+from dateutil import parser
 import argparse
 import sys
 import pprint
@@ -66,7 +67,26 @@ def probe(host, port, force_ssl = False):
     + crypto.X509.get_subject
     + crypto.X509.get_version
     """
-    to_return['peercert'] = cert.get_issuer().get_components()
+    to_return['peercert'] = __prepare_cert(cert)
+    return to_return
+
+def __prepare_cert(cert):
+    to_return = {}
+    to_return['issuer'] = cert.get_issuer().get_components()
+    #to_return['pubkey'] = cert.get_pubkey()
+    to_return['serial_number'] = cert.get_serial_number()
+    try:
+        to_return['signature_algorithm'] = cert.get_signature_algorithm()
+    except:
+        to_return['signature_algorithm'] = None
+    to_return['subject'] = cert.get_subject().get_components()
+    to_return['version'] = cert.get_version()
+    to_return['notBefore'] = cert.get_notBefore()
+    if cert.get_notBefore() is not None:
+        to_return['notBefore'] = parser.parse(cert.get_notBefore())
+    if cert.get_notAfter() is not None:
+        to_return['notAfter'] = parser.parse(cert.get_notAfter())
+    to_return['digest_sha256'] = cert.digest('sha256')
     return to_return
 
 
@@ -89,13 +109,13 @@ def historize(p, data):
     return True
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    g = parser.add_mutually_exclusive_group(required=False)
+    p = argparse.ArgumentParser()
+    g = p.add_mutually_exclusive_group(required=False)
     g.add_argument('--history', action='store_true', default=False,
             help='Save the informations related to the server in a redis backend.')
     g.add_argument('domains', nargs='?', type=argparse.FileType('r'),
             default=sys.stdin, help='List of domains from stdin or a text file.')
-    args = parser.parse_args()
+    args = p.parse_args()
 
     if args.history:
         if not redis_package:
