@@ -53,20 +53,6 @@ def probe(host, port, force_ssl = False):
     to_return['ip'], to_return['port'] = s.sock.getpeername()
     cert = crypto.load_certificate(crypto.FILETYPE_PEM,
             ssl.DER_cert_to_PEM_cert(s.sock.getpeercert(True)))
-    """
-    interesting functions
-    ? crypto.X509.digest
-    - crypto.X509.get_extension
-    - crypto.X509.get_extension_count
-    + crypto.X509.get_issuer
-    - crypto.X509.get_notAfter
-    - crypto.X509.get_notBefore
-    + crypto.X509.get_pubkey
-    + crypto.X509.get_serial_number
-    + crypto.X509.get_signature_algorithm
-    + crypto.X509.get_subject
-    + crypto.X509.get_version
-    """
     to_return['peercert'] = __prepare_cert(cert)
     return to_return
 
@@ -96,16 +82,18 @@ def historize(p, data):
         return False
     if r.sismember(data['host'], data['ip']):
         dates = list(r.smembers(data['ip']))
-        dates.sort()
+        dates.sort(reverse=True)
         if day in dates:
             return False
-        cipher = r.hget(data['ip'] + '|' + str(dates[-1]), port)
-        if cipher == data['cipher_name']:
+        # Is it sane to assume the cert will be the same on all the ports ?
+        digest = r.hget(data['ip'] + '|' + str(dates[0]), 'digest')
+        if digest == data['peercert']['digest_sha256']:
             return False
     else:
         p.sadd(data['host'], data['ip'])
         p.sadd(data['ip'], day)
-    p.hset(data['ip'] + '|' + day, port, data['cipher_name'])
+    p.hmset(data['ip'] + '|' + day, {port: data['cipher_name'],
+        'digest': data['peercert']['digest_sha256']})
     return True
 
 if __name__ == '__main__':

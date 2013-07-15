@@ -15,6 +15,8 @@ if __name__ == '__main__':
                 day = dates[-1]
                 entries = r.hgetall(ip + '|' + day)
                 for port, cipher in r.hgetall(ip + '|' + day).iteritems():
+                    if port == 'digest':
+                        continue
                     w.writerow([domain, ip, port, cipher])
 
 
