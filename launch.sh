@@ -11,7 +11,7 @@ cat domain_list | python populate.py
 echo ' done.'
 
 echo -n 'Launch probes...'
-for i in {1..10}; do
+for i in {1..100}; do
     python probe.py --history &
 done
 python probe.py --history

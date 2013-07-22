@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     for line in args.infile:
         domain = line.strip()
-        if len(domain) == 0:
+        if len(domain) == 0 or domain[0] == '#':
             continue
         p.sadd('domains', domain)
     # copy the key
